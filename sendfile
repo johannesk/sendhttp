@@ -36,6 +36,10 @@ begin
 		exit 0
 	end
 
+	arghandler.on("-n FILENAME", "--name FILENAME", "advertise file as FILENAME") do |filename|
+		$filename= filename
+	end
+
 	$port= 12345
 	arghandler.on("-p PORT", "--port PORT", Integer, "Listen on port PORT") do |port|
 		$port= port.to_i
@@ -58,7 +62,7 @@ begin
 			STDERR.puts "File '#{$file}' does not exist"
 			exit 1
 		end
-		$filename= Pathname.new($file).basename.to_s
+		$filename= Pathname.new($file).basename.to_s unless $filename
 	else
 		unless $filename
 			SDTERR.puts "No filename given"

@@ -1,6 +1,7 @@
 #!/bin/env ruby
 require 'socket'
 require 'magicmime'
+require 'io2io'
 
 module SendHTTP
 
@@ -25,12 +26,10 @@ module SendHTTP
 								sockets.each { |s| s.close }
 								local.puts "HTTP/1.1 200 OK"
 								local.puts "Server: sendfile-utils/#{$version}"
-								local.puts "Content-Length: #{File.size Pathname.new(file.path).basename}" if File===file
+								local.puts "Content-Length: #{File.size file.path}" if File===file
 								local.puts "Content-Type: #{MagicMime.file(file.path)}"
 								local.puts 
-								while chunk= file.read(1024*1024)
-									local.write(chunk)
-								end
+								IO2IO.forever(file.to_i, local.to_i)
 							else
 								local.puts "HTTP/1.1 400 Bad Request"
 								local.puts "Server: sendfile-utils/#{$version}"
