@@ -1,0 +1,63 @@
+#!/bin/env ruby
+require 'socket'
+require 'magicmime'
+
+module SendHTTP
+
+	def SendHTTP.do(file, filename, port)
+		listen= TCPServer.new(nil, port)
+		sockets= []
+		threads= []
+		begin
+			while sockets<< listen.accept
+				lock= true
+				threads<< Thread.new do
+					local= sockets[-1]
+					lock= false
+					data= ""
+					begin
+						data+= local.read_nonblock(1024*1024)
+						if data=~ /\n/
+							line= data.to_a[0].strip
+							if line=~ /^GET \/(.*?) HTTP\/1.[01]$/ and $1==filename
+								listen.close
+								sockets.delete local
+								sockets.each { |s| s.close }
+								local.puts "HTTP/1.1 200 OK"
+								local.puts "Server: sendfile-utils/#{$version}"
+								local.puts "Content-Length: #{File.size Pathname.new(file.path).basename}" if File===file
+								local.puts "Content-Type: #{MagicMime.file(file.path)}"
+								local.puts 
+								while chunk= file.read(1024*1024)
+									local.write(chunk)
+								end
+							else
+								local.puts "HTTP/1.1 400 Bad Request"
+								local.puts "Server: sendfile-utils/#{$version}"
+								local.puts
+							end
+							local.close
+							sockets.delete(local)
+						end
+					rescue Errno::EAGAIN
+						retry
+					rescue IOError
+						sockets.delete(local)
+					rescue EOFError
+						local.close
+						sockets.delete(local)
+					end
+				end
+				sleep 0.01 while lock
+			end
+		rescue Errno::EAGAIN
+			retry
+		rescue IOError
+			threads.each { |t| t.join }
+		end
+	end
+
+end
+
+$network_module= SendHTTP
+load 'sendfile'
