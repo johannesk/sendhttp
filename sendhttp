@@ -47,6 +47,7 @@ module SendHTTP
 								local.puts "Server: sendfile-utils/#{$version}"
 								local.puts "Content-Length: #{File.size file.path}" if File===file
 								local.puts "Content-Type: #{MagicMime.file(file.path)}"
+								local.puts "Connection: close"
 								local.puts 
 								IO2IO.forever(file.to_i, local.to_i)
 							else

@@ -29,7 +29,6 @@ clean-io2io: makefile-io2io
 	rm io2io/Makefile
 
 makefile-io2io: io2io/extconf.rb
-	cd io2io
 	ruby  -Cio2io extconf.rb
 
 magicmime: makefile-magicmime
@@ -40,5 +39,4 @@ clean-magicmime: makefile-magicmime
 	rm magicmime/Makefile
 
 makefile-magicmime: io2io/extconf.rb
-	cd magicmime
 	ruby -Cmagicmime extconf.rb

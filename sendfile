@@ -64,7 +64,7 @@ begin
 		$filename= Pathname.new($file).basename.to_s unless $filename
 	else
 		unless $filename
-			SDTERR.puts "No filename given"
+			STDERR.puts "No filename given"
 			exit 1
 		end
 	end

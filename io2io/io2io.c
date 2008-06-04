@@ -19,18 +19,32 @@
 
 #include <ruby.h>
 #include <errno.h>
+#include <fcntl.h>
 
 VALUE t_forever(VALUE self, VALUE in, VALUE out)
 {
 	int s, d;
 	s= NUM2INT(in);
 	d= NUM2INT(out);
+
+
+	//deactivate O_NONBLOCK
+	int flags_s= fcntl(s, F_GETFL);
+	int flags_d= fcntl(d, F_GETFL);
+	fcntl(s, F_SETFL, 0);
+	fcntl(d, F_SETFL, 0);
+
 	char buffer[1024];
 	int size;
 	while ((size= read(s, buffer ,sizeof(buffer)))>0) {
-		while (write(d, buffer, size)==-1 && errno==EAGAIN)
-			errno= 0;
+		if (write(d, buffer, size)==-1) {
+			rb_raise(rb_eException, "errno");
+		}
 	}
+
+	fcntl(s, F_SETFL, flags_s);
+	fcntl(d, F_SETFL, flags_d);
+
 	return Qnil;
 }
 
