@@ -49,7 +49,15 @@ module SendHTTP
 								local.puts "Content-Type: #{MagicMime.file(file.path)}"
 								local.puts "Connection: close"
 								local.puts 
-								IO2IO.forever(file.to_i, local.to_i)
+								begin
+									IO2IO.forever(file.to_i, local.to_i)
+								rescue Errno::EPIPE
+									STDERR.puts "Upload aborted by client"
+									exit 3
+								rescue Errno::ECONNRESET
+									STDERR.puts "Upload aborted by client"
+									exit 3
+								end
 							else
 								local.puts "HTTP/1.1 400 Bad Request"
 								local.puts "Server: sendfile-utils/#{$version}"

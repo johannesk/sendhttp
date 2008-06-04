@@ -37,9 +37,10 @@ VALUE t_forever(VALUE self, VALUE in, VALUE out)
 	char buffer[1024];
 	int size;
 	while ((size= read(s, buffer ,sizeof(buffer)))>0) {
-		if (write(d, buffer, size)==-1) {
-			rb_raise(rb_eException, "errno");
-		}
+		if (size==-1)
+			rb_sys_fail("io2io input");
+		if (write(d, buffer, size)==-1)
+			rb_sys_fail("io2io output");
 	}
 
 	fcntl(s, F_SETFL, flags_s);
