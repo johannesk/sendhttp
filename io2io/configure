@@ -1,3 +1,4 @@
+#!/bin/env ruby
 #
 # © Johannes Krude 2008
 #
@@ -17,18 +18,5 @@
 # along with Foobar.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-all: io2io magicmime
-
-clean: clean-io2io clean-magicmime
-
-io2io: io2io/Makefile
-	make -C io2io
-
-clean-io2io: io2io/Makefile
-	make -C io2io clean
-
-magicmime: magicmime/Makefile
-	make -C magicmime
-
-clean-magicmime: magicmime/Makefile
-	make -C magicmime clean
+require 'mkmf'
+create_makefile("sendfile/io2io")

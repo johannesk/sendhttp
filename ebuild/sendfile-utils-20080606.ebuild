@@ -1,0 +1,117 @@
+# Copyright 1999-2008 Gentoo Foundation
+# Distributed under the terms of the GNU General Public License v2
+# $Header: $
+
+# NOTE: The comments in this file are for instruction and documentation.
+# They're not meant to appear with your final, production ebuild.  Please
+# remember to remove them before submitting or committing your ebuild.  That
+# doesn't mean you can't add your own comments though.
+
+# The 'Header' on the third line should just be left alone.  When your ebuild
+# will be committed to cvs, the details on that line will be automatically
+# generated to contain the correct data.
+
+# The EAPI variable tells the ebuild format in use.
+# Defaults to 0 if not specified. The current PMS draft contains details on
+# a proposed EAPI=0 definition but is not finalized yet.
+# Eclasses will test for this variable if they need to use EAPI > 0 features.
+# Ebuilds should not define EAPI > 0 unless they absolutely need to use
+# features added in that version.
+#EAPI=0
+
+# inherit lists eclasses to inherit functions from. Almost all ebuilds should
+# inherit eutils, as a large amount of important functionality has been
+# moved there. For example, the $(get_libdir) mentioned below wont work
+# without the following line:
+inherit eutils
+# A well-used example of an eclass function that needs eutils is epatch. If
+# your source needs patches applied, it's suggested to put your patch in the
+# 'files' directory and use:
+#
+#   epatch ${FILESDIR}/patch-name-here
+#
+# eclasses tend to list descriptions of how to use their functions properly.
+# take a look at /usr/portage/eclasses/ for more examples.
+
+# Short one-line description of this package.
+DESCRIPTION="A fast solution for sending files to othe hosts"
+
+# Homepage, not used by Portage directly but handy for developer reference
+HOMEPAGE="http://foo.bar.com/"
+
+# Point to any required sources; these will be automatically downloaded by
+# Portage.
+SRC_URI="http://chaos-disciple.org/johannes/distfiles/sendfile-utils-20080606.tar.gz"
+LICENSE="AGPL-3"
+SLOT="0"
+KEYWORDS="~amd64"
+IUSE=""
+#RESTRICT="fetch"
+DEPEND=">=dev-lang/ruby-1.8.6_p114 >=sys-apps/file-4.24"
+RDEPEND="${DEPEND}"
+
+# Source directory; the dir where the sources can be found (automatically
+# unpacked) inside ${WORKDIR}.  The default value for S is ${WORKDIR}/${P}
+# If you don't need to change it, leave the S= line out of the ebuild
+# to keep it tidy.
+#S="${WORKDIR}/${P}"
+
+src_compile() {
+	# Most open-source packages use GNU autoconf for configuration.
+	# The quickest (and preferred) way of running configure is:
+	econf || die "econf failed"
+	#
+	# You could use something similar to the following lines to
+	# configure your package before compilation.  The "|| die" portion
+	# at the end will stop the build process if the command fails.
+	# You should use this at the end of critical commands in the build
+	# process.  (Hint: Most commands are critical, that is, the build
+	# process should abort if they aren't successful.)
+	#./configure \
+	#	--host=${CHOST} \
+	#	--prefix=/usr \
+	#	--infodir=/usr/share/info \
+	#	--mandir=/usr/share/man || die "./configure failed"
+	# Note the use of --infodir and --mandir, above. This is to make
+	# this package FHS 2.2-compliant.  For more information, see
+	#   http://www.pathname.com/fhs/
+
+	# emake (previously known as pmake) is a script that calls the
+	# standard GNU make with parallel building options for speedier
+	# builds (especially on SMP systems).  Try emake first.  It might
+	# not work for some packages, because some makefiles have bugs
+	# related to parallelism, in these cases, use emake -j1 to limit
+	# make to a single process.  The -j1 is a visual clue to others
+	# that the makefiles have bugs that have been worked around.
+	emake || die "emake failed"
+}
+
+src_install() {
+	# You must *personally verify* that this trick doesn't install
+	# anything outside of DESTDIR; do this by reading and
+	# understanding the install part of the Makefiles.
+	# This is the preferred way to install.
+	emake DESTDIR="${D}" install || die "emake install failed"
+
+	# When you hit a failure with emake, do not just use make. It is
+	# better to fix the Makefiles to allow proper parallelization.
+	# If you fail with that, use "emake -j1", it's still better than make.
+
+	# For Makefiles that don't make proper use of DESTDIR, setting
+	# prefix is often an alternative.  However if you do this, then
+	# you also need to specify mandir and infodir, since they were
+	# passed to ./configure as absolute paths (overriding the prefix
+	# setting).
+	#emake \
+	#	prefix="${D}"/usr \
+	#	mandir="${D}"/usr/share/man \
+	#	infodir="${D}"/usr/share/info \
+	#	libdir="${D}"/usr/$(get_libdir) \
+	#	install || die "emake install failed"
+	# Again, verify the Makefiles!  We don't want anything falling
+	# outside of ${D}.
+
+	# The portage shortcut to the above command is simply:
+	#
+	#einstall || die "einstall failed"
+}

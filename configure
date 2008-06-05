@@ -1,8 +1,37 @@
-#!/bin/bash
-if [ "$1" == "clean" ]; then
-	rm io2io/Makefile
-	rm magicmime/Makefile
+#!/bin/en#
+#
+# © Johannes Krude 2008
+#
+# This file is part of sendfile-utils.
+#
+# broadcast-files is free software: you can redistribute it and/or modify
+# it under the terms of the GNU Affero General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# broadcast-files is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU Affero General Public License for more details.
+#
+# You should have received a copy of the GNU Affero General Public License
+# along with Foobar.  If not, see <http://www.gnu.org/licenses/>.
+#
+require 'erb'
+require 'rbconfig'
+
+def exc str
+	puts str
+	system str
+end
+
+if ARGV[0]=="clean"
+	exc "rm io2io/Makefile"
+	exc "rm magicmime/Makefile"
+	exc "rm Makefile"
 else
-	ruby -Cio2io extconf.rb
-	ruby -Cmagicmime extconf.rb
-fi
+	exc "ruby -Cio2io configure"
+	exc "ruby -Cmagicmime configure"
+	puts "Creating Makefile"
+	File.open("Makefile", "w").write(ERB.new(File.open("Makefile.eruby", "r").read).result(binding))
+end

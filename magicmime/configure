@@ -19,4 +19,5 @@
 #
 
 require 'mkmf'
-create_makefile("io2io")
+have_library("magic")
+create_makefile("sendfile/magicmime")

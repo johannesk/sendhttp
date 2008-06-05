@@ -19,8 +19,8 @@
 #
 
 require 'socket'
-require 'magicmime'
-require 'io2io'
+require 'sendfile/magicmime'
+require 'sendfile/io2io'
 
 module SendHTTP
 
@@ -87,4 +87,4 @@ module SendHTTP
 end
 
 $network_module= SendHTTP
-load 'sendfile'
+load 'sendfile.rb'

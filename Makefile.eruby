@@ -1,0 +1,62 @@
+#
+# © Johannes Krude 2008
+#
+# This file is part of sendfile-utils.
+#
+# broadcast-files is free software: you can redistribute it and/or modify
+# it under the terms of the GNU Affero General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# broadcast-files is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU Affero General Public License for more details.
+#
+# You should have received a copy of the GNU Affero General Public License
+# along with Foobar.  If not, see <http://www.gnu.org/licenses/>.
+#
+
+MAJOR = <%= Config::MAKEFILE_CONFIG["MAJOR"] %>
+MINOR = <%= Config::MAKEFILE_CONFIG["MINOR"] %>
+ruby_version = <%= Config::MAKEFILE_CONFIG["ruby_version"] %>
+
+prefix = $(DESTDIR)<%= Config::MAKEFILE_CONFIG["prefix"] %>
+exec_prefix = <%= Config::MAKEFILE_CONFIG["exec_prefix"] %>
+sitedir = <%= Config::MAKEFILE_CONFIG["sitedir"]%>
+sitelibdir = <%= Config::MAKEFILE_CONFIG["sitelibdir"] %>
+bindir = <%= Config::MAKEFILE_CONFIG["bindir"] %>
+
+MKDIR = <%= Config::MAKEFILE_CONFIG["MAKEDIRS"] %>
+INSTALL = <%= Config::MAKEFILE_CONFIG["INSTALL"] %>
+INSTALL_DATA = $(INSTALL) -m 644
+INSTALL_BIN = $(INSTALL) -m 755
+
+all: make-io2io make-magicmime
+
+install: all install-io2io install-magicmime
+	$(MKDIR) $(bindir)
+	$(MKDIR) $(sitelibdir)
+	$(INSTALL_BIN) sendhttp $(bindir)
+	$(INSTALL_DATA) sendfile.rb $(sitelibdir)
+
+clean: clean-io2io clean-magicmime
+
+make-io2io:
+	make -C io2io
+
+install-io2io:
+	make -C io2io install
+
+clean-io2io: io2io/Makefile
+	make -C io2io clean
+
+make-magicmime:
+	make -C magicmime
+
+install-magicmime:
+	make -C magicmime install
+
+clean-magicmime: magicmime/Makefile
+	make -C magicmime clean
+
