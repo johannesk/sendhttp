@@ -21,22 +21,14 @@ all: io2io magicmime
 
 clean: clean-io2io clean-magicmime
 
-io2io: makefile-io2io
+io2io: io2io/Makefile
 	make -C io2io
 
-clean-io2io: makefile-io2io
+clean-io2io: io2io/Makefile
 	make -C io2io clean
-	rm io2io/Makefile
 
-makefile-io2io: io2io/extconf.rb
-	ruby  -Cio2io extconf.rb
-
-magicmime: makefile-magicmime
+magicmime: magicmime/Makefile
 	make -C magicmime
 
-clean-magicmime: makefile-magicmime
+clean-magicmime: magicmime/Makefile
 	make -C magicmime clean
-	rm magicmime/Makefile
-
-makefile-magicmime: io2io/extconf.rb
-	ruby -Cmagicmime extconf.rb

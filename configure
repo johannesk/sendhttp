@@ -1,0 +1,8 @@
+#!/bin/bash
+if [ "$1" == "clean" ]; then
+	rm io2io/Makefile
+	rm magicmime/Makefile
+else
+	ruby -Cio2io extconf.rb
+	ruby -Cmagicmime extconf.rb
+fi
