@@ -1,4 +1,4 @@
-#!/bin/env ruby
+#!/usr/bin/env ruby
 #
 # © Johannes Krude 2008
 #
@@ -18,75 +18,91 @@
 # along with Foobar.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-require 'socket'
-require 'sendfile/magicmime'
-require 'sendfile/io2io'
+$version= "pre 0.1α"
 
-module SendHTTP
+$: << "./lib"
+require 'optparse'
+require 'pathname'
+require 'sendfile/httpserver'
+require 'sendfile/html'
 
-	def SendHTTP.do(file, filename, port)
-		listen= TCPServer.new(nil, port)
-		sockets= []
-		threads= []
-		begin
-			while sockets<< listen.accept
-				lock= true
-				threads<< Thread.new do
-					local= sockets[-1]
-					lock= false
-					data= ""
-					begin
-						data+= local.read_nonblock(1024*1024)
-						if data=~ /\n/
-							line= data.to_a[0].strip
-							if line=~ /^GET \/(.*?) HTTP\/1.[01]$/ and $1==filename
-								listen.close
-								sockets.delete local
-								sockets.each { |s| s.close }
-								local.puts "HTTP/1.1 200 OK"
-								local.puts "Date: #{Date.now.gmtime.strftime("%a, %d %b %Y %H:%M:%S GMT")}"
-								local.puts "Server: sendfile-utils/#{$version}"
-								local.puts "Content-Length: #{File.size file.path}" if File===file
-								local.puts "Content-Type: #{MagicMime.file(file.path)}"
-								local.puts "Connection: close"
-								local.puts 
-								begin
-									IO2IO.forever(file.to_i, local.to_i)
-								rescue Errno::EPIPE
-									STDERR.puts "Upload aborted by client"
-									exit 3
-								rescue Errno::ECONNRESET
-									STDERR.puts "Upload aborted by client"
-									exit 3
-								end
-							else
-								local.puts "HTTP/1.1 400 Bad Request"
-								local.puts "Date: #{Date.now.gmtime.strftime("%a, %d %b %Y %H:%M:%S GMT")}"
-								local.puts "Server: sendfile-utils/#{$version}"
-								local.puts
-							end
-							local.close
-							sockets.delete(local)
-						end
-					rescue Errno::EAGAIN
-						retry
-					rescue IOError
-						sockets.delete(local)
-					rescue EOFError
-						local.close
-						sockets.delete(local)
-					end
-				end
-				sleep 0.01 while lock
-			end
-		rescue Errno::EAGAIN
-			retry
-		rescue IOError
-			threads.each { |t| t.join }
+$verbose= 1
+
+begin
+	arghandler= OptionParser.new
+	
+#	arghandler.banner= "Usage: bget [options] CATEGORY/FILE"
+
+	arghandler.on("-h", "--help", "display this message") do
+		STDOUT.puts arghandler
+		exit 0
+	end
+
+	$listing= false
+	arghandler.on("-l", "--listing", "enable directory listing") do
+		$listing= true
+	end
+
+	$filename= nil
+	arghandler.on("-n FILENAME", "--name FILENAME", "advertise file as FILENAME") do |filename|
+		$filename= filename
+	end
+
+	$port= 12345
+	arghandler.on("-p PORT", "--port PORT", Integer, "Listen on port PORT") do |port|
+		$port= port.to_i
+	end
+
+	$timeout= 1.0/0 #Infinity
+	arghandler.on("-t SECONDS", "--timeout SECONDS", Float, "wait SECONDS for a request") do |timeout|
+		$timeout= timeout
+	end
+
+	arghandler.on("-v", "--version", "display the version number") do
+		STDOUT.puts $version
+		exit 0
+	end
+
+	args= arghandler.parse(ARGV)
+	$file= args.shift
+	if $file
+		unless File.exists? $file
+			STDERR.puts "File '#{$file}' does not exist"
+			exit 1
+		end
+		$filename= Pathname.new($file).basename.to_s unless $filename
+	else
+		unless $filename
+			STDERR.puts "No filename given"
+			exit 1
 		end
 	end
 
+	HTTPServer.new.listen($port) do |filename, vars|
+		case filename
+		when $filename
+			HTTPServer.put_file($file)
+		when ""
+			if $listing
+				HTML.base(HTML.h1("The following files are available")+HTML.div(HTML.list(HTML.a($filename, "/#{$filename}"))))
+			end
+		else
+				false
+		end
+	end
+
+rescue OptionParser::MissingArgument => e
+	STDERR.puts "Missing argument for '#{e.args}'"
+	exit 1
+rescue OptionParser::InvalidOption => e
+	STDERR.puts "Undefined Option '#{e.args}'"
+	exit 1
+rescue OptionParser::InvalidArgument => e
+	STDERR.puts "Invalid argument for '#{e.args}'"
+	exit 1
+rescue SignalException => e
+	STDERR.puts "#{e} aborted"
+rescue Interrupt
+	STDERR.puts "aborted"
 end
 
-$network_module= SendHTTP
-load 'sendfile.rb'

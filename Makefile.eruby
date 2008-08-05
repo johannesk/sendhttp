@@ -38,7 +38,8 @@ install: all install-io2io install-magicmime
 	$(MKDIR) $(bindir)
 	$(MKDIR) $(sitelibdir)
 	$(INSTALL_BIN) sendhttp $(bindir)
-	$(INSTALL_DATA) sendfile.rb $(sitelibdir)
+	$(INSTALL_DATA) httpserver.rb $(sitelibdir)
+	$(INSTALL_DATA) html.rb $(sitelibdir)
 
 clean: clean-io2io clean-magicmime
 
