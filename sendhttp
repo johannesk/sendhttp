@@ -53,6 +53,11 @@ begin
 		$port= port.to_i
 	end
 
+	$quit= 1.0/0
+	arghandler.on("-q NUM", "--quit NUM", Integer, "quit after NUM succesfull downloads") do |num|
+		$quit= num
+	end
+
 	$timeout= 1.0/0 #Infinity
 	arghandler.on("-t SECONDS", "--timeout SECONDS", Float, "wait SECONDS for a request") do |timeout|
 		$timeout= timeout
@@ -78,9 +83,13 @@ begin
 		end
 	end
 
-	HTTPServer.new.listen($port) do |filename, vars|
+	server= HTTPServer.new
+	server.listen($port) do |filename, vars|
+		puts filename
 		case filename
 		when $filename
+			$quit-= 1
+			server.close if $quit==0
 			HTTPServer.put_file($file)
 		when ""
 			if $listing

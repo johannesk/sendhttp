@@ -29,14 +29,23 @@ class HTTPServer
 	def listen(port, &block)
 		@listen= TCPServer.new(nil, port)
 		begin
+			threads= 0
 			while connection= @listen.accept
+				threads+= 1
 				Thread.new(connection) do |c|
 					handle_connection(c, &block)
+					threads-= 1
 				end
 			end
 		rescue Errno::EAGAIN
 			retry
+		rescue Errno::EINVAL
 		end
+		sleep 0.01 while threads > 0
+	end
+
+	def close
+		@listen.close_read
 	end
 
 	def handle_connection(connection, &block)
