@@ -85,7 +85,6 @@ begin
 
 	server= HTTPServer.new
 	server.listen($port) do |filename, vars|
-		puts filename
 		case filename
 		when $filename
 			$quit-= 1

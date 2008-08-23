@@ -64,6 +64,8 @@ class HTTPServer
 			connection.puts "Connection: close"
 			connection.puts
 			case stream
+			when File
+				IO2IO.sendfile(stream.to_i, connection.to_i, (vars["Content-Length"] or -1))
 			when IO
 				IO2IO.forever(stream.to_i, connection.to_i)
 			when String
