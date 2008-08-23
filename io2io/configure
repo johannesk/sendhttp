@@ -19,4 +19,4 @@
 #
 
 require 'mkmf'
-create_makefile("sendfile/io2io")
+create_makefile("sendhttp-lib/io2io")

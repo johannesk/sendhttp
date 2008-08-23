@@ -1,3 +1,8 @@
+<%
+require './git'
+$git= Git.new
+$rev= $git.rev
+%>
 # Copyright 1999-2008 Gentoo Foundation
 # Distributed under the terms of the GNU General Public License v2
 # $Header: $
@@ -41,12 +46,12 @@ HOMEPAGE="http://foo.bar.com/"
 
 # Point to any required sources; these will be automatically downloaded by
 # Portage.
-SRC_URI="http://chaos-disciple.org/johannes/distfiles/sendfile-utils-20080606.tar.gz"
+SRC_URI="sendhttp-<%= $rev %>.tar.gz"
 LICENSE="AGPL-3"
 SLOT="0"
 KEYWORDS="~amd64"
 IUSE=""
-#RESTRICT="fetch"
+RESTRICT="fetch"
 DEPEND=">=dev-lang/ruby-1.8.6_p114 >=sys-apps/file-4.24"
 RDEPEND="${DEPEND}"
 

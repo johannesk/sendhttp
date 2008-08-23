@@ -20,4 +20,4 @@
 
 require 'mkmf'
 have_library("magic")
-create_makefile("sendfile/magicmime")
+create_makefile("sendhttp-lib/magicmime")

@@ -23,8 +23,8 @@ $version= "pre 0.1α"
 $: << "./lib"
 require 'optparse'
 require 'pathname'
-require 'sendfile/httpserver'
-require 'sendfile/html'
+require 'sendhttp-lib/httpserver'
+require 'sendhttp-lib/html'
 
 $verbose= 1
 

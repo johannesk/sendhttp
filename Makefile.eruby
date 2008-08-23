@@ -37,9 +37,10 @@ all: make-io2io make-magicmime
 install: all install-io2io install-magicmime
 	$(MKDIR) $(bindir)
 	$(MKDIR) $(sitelibdir)
+	$(MKDIR) $(sitelibdir)/sendhttp-lib
 	$(INSTALL_BIN) sendhttp $(bindir)
-	$(INSTALL_DATA) httpserver.rb $(sitelibdir)
-	$(INSTALL_DATA) html.rb $(sitelibdir)
+	$(INSTALL_DATA) httpserver.rb $(sitelibdir)/sendhttp-lib
+	$(INSTALL_DATA) html.rb $(sitelibdir)/sendhttp-lib
 
 clean: clean-io2io clean-magicmime
 

@@ -17,8 +17,8 @@
 # along with Foobar.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-require 'sendfile/io2io'
-require 'sendfile/magicmime'
+require 'sendhttp-lib/io2io'
+require 'sendhttp-lib/magicmime'
 
 class HTTPServer
 
