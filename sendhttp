@@ -92,7 +92,7 @@ begin
 			HTTPServer.put_file($file)
 		when ""
 			if $listing
-				HTML.base(HTML.h1("The following files are available")+HTML.div(HTML.list(HTML.a($filename, "/#{$filename}"))))
+				[HTML.base(HTML.h1("The following files are available")+HTML.div(HTML.list(HTML.a($filename, "/#{$filename}")))), nil, "404 NOT FOUND"]
 			end
 		else
 				false

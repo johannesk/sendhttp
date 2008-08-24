@@ -52,13 +52,10 @@ class HTTPServer
 		line= connection.readline.strip
 		if line=~ /^GET \/(.*?) HTTP\/1.[01]$/ and stream= block.call($1, HTTPServer.read_vars(connection))
 			stream= [stream].flatten
-			vars= if stream.size == 2
-				stream[1]
-			else
-				Hash.new
-			end
+			status= ((stream.size == 3 and stream.pop) or "200 OK")
+			vars= ((stream.size == 2 and stream.pop) or Hash.new)
 			stream= stream[0]
-			connection.puts "HTTP/1.1 200 OK"
+			connection.puts "HTTP/1.1 #{status}"
 			connection.puts HTTPServer.header.collect { |name, value| "#{name}: #{value}" }
 			connection.puts vars.collect { |name, value| "#{name}: #{value}" }
 			connection.puts "Connection: close"
