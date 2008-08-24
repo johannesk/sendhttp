@@ -28,7 +28,7 @@ module HTML
 	end
 
 	def HTML.list(list)
-		"<li>#{list.collect { |l| "<ul>#{l}</ul>" }.join}</li>"
+		"<ul>#{list.collect { |l| "<li>#{l}</li>" }.join}</ul>"
 	end
 
 	def HTML.a(name, href)

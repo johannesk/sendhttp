@@ -31,7 +31,7 @@ $verbose= 1
 begin
 	arghandler= OptionParser.new
 	
-#	arghandler.banner= "Usage: bget [options] CATEGORY/FILE"
+	arghandler.banner= "Usage: sendhttp [options] <file [@ name]>*"
 
 	arghandler.on("-h", "--help", "display this message") do
 		STDOUT.puts arghandler
@@ -41,11 +41,6 @@ begin
 	$listing= false
 	arghandler.on("-l", "--listing", "enable directory listing") do
 		$listing= true
-	end
-
-	$filename= nil
-	arghandler.on("-n FILENAME", "--name FILENAME", "advertise file as FILENAME") do |filename|
-		$filename= filename
 	end
 
 	$port= 12345
@@ -68,32 +63,63 @@ begin
 		exit 0
 	end
 
-	args= arghandler.parse(ARGV)
-	$file= args.shift
-	if $file
-		unless File.exists? $file
-			STDERR.puts "File '#{$file}' does not exist"
-			exit 1
+	def find(dir= ".")
+		Dir.new(dir).collect do |f|
+			next if f=~ /^\./
+			next if FileTest.symlink?(f)
+			if FileTest.directory?(f)
+				find(f).collect { |g| f+"/"+g }
+			else
+				f
+			end
+		end.delete_if { |x| !x }.flatten
+	end
+	
+	$file= Hash.new
+	name= false
+	last= nil
+	(arghandler.parse(ARGV)+[nil]).each do |file|
+		case
+		when name
+			name= false
+			$file[file]= last
+			last= nil
+		when file=="@"
+			name= true
+		else
+			$file[last]= last if last
+			last= file
 		end
-		$filename= Pathname.new($file).basename.to_s unless $filename
-	else
-		unless $filename
-			STDERR.puts "No filename given"
-			exit 1
+	end
+	$file.each_key do |k|
+		if !( k and $file[k] and !FileTest.symlink?($file[k]))
+			$file.delete(k)
+		elsif FileTest.directory?($file[k])
+			find($file[k]).each do |f|
+				$file[k+"/"+f]= $file[k]+"/"+f
+			end
+			$file.delete(k)
+		else
+			unless File.exists?($file[k])
+				STDERR.puts "File '#{last}' does not exist"
+				exit 1
+			end
 		end
+	end
+
+	unless $file.size > 0
+		STDERR.puts "No filename given"
+		exit 1
 	end
 
 	server= HTTPServer.new
 	server.listen($port) do |filename, vars|
-		case filename
-		when $filename
+		if $file[filename]
 			$quit-= 1
 			server.close if $quit==0
-			HTTPServer.put_file($file)
-		when ""
-			if $listing
-				[HTML.base(HTML.h1("The following files are available")+HTML.div(HTML.list(HTML.a($filename, "/#{$filename}")))), nil, "404 NOT FOUND"]
-			end
+			HTTPServer.put_file($file[filename])
+		elsif $listing
+			[HTML.base(HTML.h1("The following files are available")+HTML.div(HTML.list($file.keys.sort.collect { |k| HTML.a(k, "/#{k}") } ))), nil, "404 NOT FOUND"]
 		else
 				false
 		end
