@@ -96,7 +96,11 @@ begin
 			$file.delete(k)
 		elsif FileTest.directory?($file[k])
 			find($file[k]).each do |f|
-				$file[k+"/"+f]= $file[k]+"/"+f
+				if k == "."
+					$file[f]= $file[k]+"/"+f
+				else
+					$file[k+"/"+f]= $file[k]+"/"+f
+				end
 			end
 			$file.delete(k)
 		else
