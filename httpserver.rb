@@ -115,7 +115,7 @@ class HTTPServer
 			vars= read_vars(stream)
 			if vars["Content-Disposition"]=~ /^form-data;?/
 				vars2= Hash.new
-				while $'.lstrip=~ /(\w+)="(.*?)"(;|$)/
+				while $'.lstrip=~ /(\w+)="(.*?)"(;|$)/ # be carefull this does not work for name="";";, in our case we only use "name" and "";" is never a part of name, but if we want to use for example filename unexpected stuff could happen
 					vars2[$1]= $2
 				end
 				result[vars2["name"]], the_end= find_boundary(stream, boundary)
