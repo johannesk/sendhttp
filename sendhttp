@@ -31,7 +31,7 @@ $verbose= 1
 begin
 	arghandler= OptionParser.new
 	
-#	arghandler.banner= "Usage: bget [options] CATEGORY/FILE"
+	arghandler.banner= "Usage: sendhttp [options] <file [@ name]>*"
 
 	$get= false
 	arghandler.on("-g", "--get", "receive a file instead of sending it") do
@@ -46,11 +46,6 @@ begin
 	$listing= false
 	arghandler.on("-l", "--listing", "enable directory listing") do
 		$listing= true
-	end
-
-	$filename= nil
-	arghandler.on("-n FILENAME", "--name FILENAME", "advertise file as FILENAME") do |filename|
-		$filename= filename
 	end
 
 	$port= 12345
@@ -73,47 +68,93 @@ begin
 		exit 0
 	end
 
-	if $get and ($filename or ($quit != 1.0/0))
-		STDERR.puts "(-g|--get) cannot be used togehter with (-n|--name) or (-q|--quit)"
+	if $get and ($quit != 1.0/0)
+		STDERR.puts "(-g|--get) cannot be used togehter with (-q|--quit)"
 		exit 1
 	end
 
-	args= arghandler.parse(ARGV)
-	$file= args.shift
-	if $file
-		unless $get or File.exists? $file
-			STDERR.puts "File '#{$file}' does not exist"
-			exit 1
+	def find(dir= ".")
+		Dir.new(dir).collect do |f|
+			next if f=~ /^\./
+			next if FileTest.symlink?(f)
+			if FileTest.directory?(f)
+				find(f).collect { |g| f+"/"+g }
+			else
+				f
+			end
+		end.delete_if { |x| !x }.flatten
+	end
+	
+	$file= Hash.new
+	name= false
+	last= nil
+	(arghandler.parse(ARGV)+[nil]).each do |file|
+		case
+		when name
+			name= false
+			$file[file]= last
+			last= nil
+		when file=="@"
+			name= true
+		else
+			$file[last]= last if last
+			last= file
 		end
-		$filename= Pathname.new($file).basename.to_s unless $filename
-	else
-		unless $filename
-			STDERR.puts "No filename given"
-			exit 1
+	end
+	$file.each_key do |k|
+		if !( k and $file[k] and !FileTest.symlink?($file[k]))
+			$file.delete(k)
+		elsif FileTest.directory?($file[k])
+			find($file[k]).each do |f|
+				if k == "."
+					$file[f]= $file[k]+"/"+f
+				else
+					$file[k+"/"+f]= $file[k]+"/"+f
+				end
+			end
+			$file.delete(k)
+		else
+			unless File.exists?($file[k]) or $get # we can write to a non existing file with (-g|--get)
+				STDERR.puts "File '#{$file[k]}' does not exist"
+				exit 1
+			end
 		end
+	end
+
+	unless $file.size > 0
+		STDERR.puts "No filename given"
+		exit 1
+	end
+
+	if $get and $file.size > 1
+		STDERR.puts "you can supply only one filename with (-g|--get)"
+		exit 1
+	end
+
+	if $get and $file.keys[0]!=$file.values[0]
+		STDERR.puts "there is no point in renaming a file, filenames are never anounced with (-g|--get)"
+		exit 1
 	end
 
 	server= HTTPServer.new
 	if $get
 		server.listen($port) do |filename, vars|
-			unless vars["form-data"]["upload"]
+			unless vars["form-data"] and vars["form-data"]["upload"]
 				HTML.base(HTML.h1("Please upload something")+HTML.div(HTML.form(" action=\"\" method=\"post\" enctype=\"multipart/form-data\"", HTML.input("hidden", " name=\"upload\"")+HTML.input("file", " name=\"file\"")+HTML.input("submit", " value=\"send\""))))
 			else
-				File.open($filename, "w").write(vars["form-data"]["file"])
+				File.open($file.values[0], "w").write(vars["form-data"]["file"])
 				HTML.base(HTML.h1("Upload complete"))
 			end
 		end
 	else
 		server.listen($port) do |filename, vars|
-			case filename
-			when $filename
+			case
+			when $file[filename]
 				$quit-= 1
 				server.close if $quit==0
-				HTTPServer.put_file($file)
-			when ""
-				if $listing
-					HTML.base(HTML.h1("The following files are available")+HTML.div(HTML.list(HTML.a($filename, "/#{$filename}"))))
-				end
+				HTTPServer.put_file($file[filename])
+			when $listing
+					[HTML.base(HTML.h1("The following files are available")+HTML.div(HTML.list($file.keys.sort.collect { |k| HTML.a(k, "/#{k}") } ))), nil, "404 NOT FOUND"]
 			else
 				false
 			end

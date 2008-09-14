@@ -58,13 +58,10 @@ class HTTPServer
 			true
 		end) and stream= block.call(filename, vars)
 			stream= [stream].flatten
-			vars= if stream.size == 2
-				stream[1]
-			else
-				Hash.new
-			end
+			status= ((stream.size == 3 and stream.pop) or "200 OK")
+			vars= ((stream.size == 2 and stream.pop) or Hash.new)
 			stream= stream[0]
-			connection.puts "HTTP/1.1 200 OK"
+			connection.puts "HTTP/1.1 #{status}"
 			connection.puts HTTPServer.header.collect { |name, value| "#{name}: #{value}" }
 			connection.puts vars.collect { |name, value| "#{name}: #{value}" }
 			connection.puts "Connection: close"
