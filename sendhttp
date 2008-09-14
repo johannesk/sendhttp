@@ -33,6 +33,11 @@ begin
 	
 #	arghandler.banner= "Usage: bget [options] CATEGORY/FILE"
 
+	$get= false
+	arghandler.on("-g", "--get", "receive a file instead of sending it") do
+		$get= true
+	end
+
 	arghandler.on("-h", "--help", "display this message") do
 		STDOUT.puts arghandler
 		exit 0
@@ -68,10 +73,15 @@ begin
 		exit 0
 	end
 
+	if $get and ($filename or ($quit != 1.0/0))
+		STDERR.puts "(-g|--get) cannot be used togehter with (-n|--name) or (-q|--quit)"
+		exit 1
+	end
+
 	args= arghandler.parse(ARGV)
 	$file= args.shift
 	if $file
-		unless File.exists? $file
+		unless $get or File.exists? $file
 			STDERR.puts "File '#{$file}' does not exist"
 			exit 1
 		end
@@ -84,18 +94,29 @@ begin
 	end
 
 	server= HTTPServer.new
-	server.listen($port) do |filename, vars|
-		case filename
-		when $filename
-			$quit-= 1
-			server.close if $quit==0
-			HTTPServer.put_file($file)
-		when ""
-			if $listing
-				HTML.base(HTML.h1("The following files are available")+HTML.div(HTML.list(HTML.a($filename, "/#{$filename}"))))
+	if $get
+		server.listen($port) do |filename, vars|
+			unless vars["form-data"]["upload"]
+				HTML.base(HTML.h1("Please upload something")+HTML.div(HTML.form(" action=\"\" method=\"post\" enctype=\"multipart/form-data\"", HTML.input("hidden", " name=\"upload\"")+HTML.input("file", " name=\"file\"")+HTML.input("submit", " value=\"send\""))))
+			else
+				File.open($filename, "w").write(vars["form-data"]["file"])
+				HTML.base(HTML.h1("Upload complete"))
 			end
-		else
+		end
+	else
+		server.listen($port) do |filename, vars|
+			case filename
+			when $filename
+				$quit-= 1
+				server.close if $quit==0
+				HTTPServer.put_file($file)
+			when ""
+				if $listing
+					HTML.base(HTML.h1("The following files are available")+HTML.div(HTML.list(HTML.a($filename, "/#{$filename}"))))
+				end
+			else
 				false
+			end
 		end
 	end
 

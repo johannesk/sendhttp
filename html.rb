@@ -39,4 +39,12 @@ module HTML
 		"<div>#{content}</div>"
 	end
 
+	def HTML.form(vars, content)
+		"<form#{vars}>#{content}</form>"
+	end
+
+	def HTML.input(type, vars)
+		"<input type=\"#{type}\"#{vars} />"
+	end
+
 end

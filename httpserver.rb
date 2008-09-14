@@ -49,8 +49,14 @@ class HTTPServer
 	end
 
 	def handle_connection(connection, &block)
-		line= connection.readline.strip
-		if line=~ /^GET \/(.*?) HTTP\/1.[01]$/ and stream= block.call($1, HTTPServer.read_vars(connection))
+		if (if connection.readline.strip=~ /^(GET|POST) \/(.*?) HTTP\/1.[01]$/
+			filename= $2
+			vars= HTTPServer.read_vars(connection)
+			if vars["Content-Type"]=~ /^multipart\/form-data;\s+boundary=(.+?)$/
+				vars["form-data"]= HTTPServer.read_multipart(connection, "--#{$1}")
+			end
+			true
+		end) and stream= block.call(filename, vars)
 			stream= [stream].flatten
 			vars= if stream.size == 2
 				stream[1]
@@ -91,6 +97,34 @@ class HTTPServer
 		result= Hash.new
 		while stream.readline.strip=~ /^([^:]+):(.*)$/
 			result[$1]= $2.strip
+		end
+		result
+	end
+
+	def HTTPServer.find_boundary(stream, boundary)
+		boundary2= "#{boundary}--"
+		result= ""
+		the_end= false
+		until (line= stream.readline).strip == boundary or (line.strip == boundary2 and the_end= true)
+			result+= line
+		end
+		[result.sub(/\r\n$/, ""), the_end] # remove the newline neccasarry to find the boundary
+	end
+
+	def HTTPServer.read_multipart(stream, boundary)
+		result= Hash.new
+		tmp, the_end= find_boundary(stream, boundary)
+		until the_end
+			vars= read_vars(stream)
+			if vars["Content-Disposition"]=~ /^form-data;?/
+				vars2= Hash.new
+				while $'.lstrip=~ /(\w+)="(.*?)"(;|$)/
+					vars2[$1]= $2
+				end
+				result[vars2["name"]], the_end= find_boundary(stream, boundary)
+			else
+				tmp, the_end= find_boundary(stream, boundary)
+			end
 		end
 		result
 	end
