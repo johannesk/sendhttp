@@ -20,7 +20,7 @@
 module HTML
 
 	def HTML.base(content)
-		"<?xml version=\"1.0\" encoding=\"UTF-8\" ?><!DOCTYPE html PUBLIC \"-//W3C//DTD XHTML 1.0 Strict//EN\" \"http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd\"><html xmlns=\"http://www.w3.org/1999/xhtml\"><head><title>available files</title></head><body>#{content}#{HTML.hr}#{HTML.div("Delivired by sendhttp #{$version}. sendhttp is licensed under the AGPLv3 see #{HTML.a("http://www.gnu.org/licenses/agpl.html")}. The sourcecode is available at #{HTML.a("link", "link")}.")}</body></html>"
+		["<?xml version=\"1.0\" encoding=\"UTF-8\" ?><!DOCTYPE html PUBLIC \"-//W3C//DTD XHTML 1.0 Strict//EN\" \"http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd\"><html xmlns=\"http://www.w3.org/1999/xhtml\"><head><title>available files</title></head><body>#{content}#{HTML.hr}#{HTML.div("Delivired by sendhttp #{$version}. sendhttp is licensed under the AGPLv3 see #{HTML.a("http://www.gnu.org/licenses/agpl.html")}. The sourcecode is available at #{HTML.a("link", "link")}.")}</body></html>", {"Content-Type" => "text/html"}]
 	end
 
 	def HTML.h1(text)

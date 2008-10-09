@@ -141,48 +141,45 @@ begin
 		exit 1
 	end
 
-	if $get and ($listing or $quit or $count)
-		STDERR.puts "you cannot use (-g|--get) and (-l|--l) or (-q|--quit) or (-c|--count) together"
-		exit 1
-	end
-
 	$file_count= Hash.new($count)
+	$file_count["-"]= 1
 
 	server= HTTPServer.new
-	if $get
-		server.listen($port) do |filename, vars|
-			unless vars["form-data"] and vars["form-data"]["upload"]
-				HTML.base(HTML.h1("Please upload something")+HTML.div(HTML.form(" action=\"\" method=\"post\" enctype=\"multipart/form-data\"", HTML.input("hidden", " name=\"upload\"")+HTML.input("file", " name=\"file\"")+HTML.input("submit", " value=\"send\""))))
-			else
-				if $file.values[0] == "-"
-					STDOUT.write(vars["form-data"]["file"])
+	server.listen($port) do |filename, vars|
+		case
+		when file= $file[filename]
+			if $get
+				unless vars["form-data"] and vars["form-data"]["upload"]
+					HTML.base(HTML.h1("Please upload something")+HTML.div(HTML.form(" action=\"\" method=\"post\" enctype=\"multipart/form-data\"", HTML.input("hidden", " name=\"upload\"")+HTML.input("file", " name=\"file\"")+HTML.input("submit", " value=\"send\""))))
 				else
-					File.open($file.values[0], "w").write(vars["form-data"]["file"])
+					$quit-= 1
+					server.close if $quit==0
+					$file_count[filename]-= 1
+					$file.delete(filename) if $file_count[filename] == 0
+					server.close if $file.keys.size == 0
+					if file == "-"
+						STDOUT.write(vars["form-data"]["file"])
+					else
+						File.open(file, "w").write(vars["form-data"]["file"])
+					end
+					HTML.base(HTML.h1("Upload Complete")+HTML.div(HTML.list($file.keys.sort.collect { |k| HTML.a(k, "/#{k}") } )))
 				end
-				server.close
-				HTML.base(HTML.h1("Upload complete"))
-			end
-		end
-	else
-		server.listen($port) do |filename, vars|
-			case
-			when file= $file[filename]
+			else
 				$quit-= 1
 				server.close if $quit==0
 				$file_count[filename]-= 1
 				$file.delete(filename) if $file_count[filename] == 0
 				server.close if $file.keys.size == 0
 				if file == "-"
-					$file.delete(filename)
 					STDIN
 				else
 					HTTPServer.put_file(file)
 				end
-			when $listing
-					[HTML.base(HTML.h1("The following files are available")+HTML.div(HTML.list($file.keys.sort.collect { |k| HTML.a(k, "/#{k}") } ))), nil, "404 NOT FOUND"]
-			else
-				false
 			end
+		when $listing
+				[HTML.base(HTML.h1("The following files are available")+HTML.div(HTML.list($file.keys.sort.collect { |k| HTML.a(k, "/#{k}") } ))), nil, "404 NOT FOUND"]
+		else
+			false
 		end
 	end
 
