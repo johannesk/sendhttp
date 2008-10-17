@@ -28,57 +28,68 @@ require 'sendhttp-lib/html'
 
 $verbose= 1
 
-begin
-	arghandler= OptionParser.new
-	
-	arghandler.banner= "Usage: sendhttp [options] <file [@ name]>*"
+class SendhttpArgs < OptionParser
 
-	$count= 1.0/0
-	arghandler.on("-c NUM", "--count NUM", "make each file only NUM times accesible") do |num|
-		$count= num.to_i
+
+	attr_reader :files
+
+	def initialize
+		super
+		@options= Hash.new
+	@files= Hash.new
+		self.banner= "Usage: sendhttp [options] <file [@ name]>*"
+
+		@options[:count]= 1.0/0
+		self.on("-c NUM", "--count NUM", "make each file only NUM times accesible") do |num|
+			@options[:count]= num.to_i
+		end
+
+		@options[:get]= false
+		self.on("-g", "--get", "receive a file instead of sending it") do
+			@options[:get]= true
+		end
+
+		self.on("-h", "--help", "display this message") do
+			STDOUT.puts self
+			exit 0
+		end
+
+		@options[:listing]= false
+		self.on("-l", "--listing", "enable directory listing") do
+			@options[:listing]= true
+		end
+
+		@options[:port]= 12345
+		self.on("-p PORT", "--port PORT", Integer, "Listen on port PORT") do |port|
+			@options[:port]= port.to_i
+		end
+
+		@options[:quit]= 1.0/0
+		self.on("-q NUM", "--quit NUM", Integer, "quit after NUM succesfull downloads") do |num|
+			@options[:quit]= num
+		end
+
+		@options[:timeout]= 1.0/0 #Infinity
+		self.on("-t SECONDS", "--timeout SECONDS", Float, "wait SECONDS for a request") do |timeout|
+			@options[:timeout]= timeout
+		end
+
+		self.on("-v", "--version", "display the version number") do
+			STDOUT.puts $version
+			exit 0
+		end
+
 	end
 
-	$get= false
-	arghandler.on("-g", "--get", "receive a file instead of sending it") do
-		$get= true
+	def [](key)
+		@options[key.to_sym]
 	end
 
-	arghandler.on("-h", "--help", "display this message") do
-		STDOUT.puts arghandler
-		exit 0
+	def []=(key, value)
+		@options[key.to_sym]= value
 	end
 
-	$listing= false
-	arghandler.on("-l", "--listing", "enable directory listing") do
-		$listing= true
-	end
-
-	$port= 12345
-	arghandler.on("-p PORT", "--port PORT", Integer, "Listen on port PORT") do |port|
-		$port= port.to_i
-	end
-
-	$quit= 1.0/0
-	arghandler.on("-q NUM", "--quit NUM", Integer, "quit after NUM succesfull downloads") do |num|
-		$quit= num
-	end
-
-	$timeout= 1.0/0 #Infinity
-	arghandler.on("-t SECONDS", "--timeout SECONDS", Float, "wait SECONDS for a request") do |timeout|
-		$timeout= timeout
-	end
-
-	arghandler.on("-v", "--version", "display the version number") do
-		STDOUT.puts $version
-		exit 0
-	end
-
-	if $get and ($quit != 1.0/0)
-		STDERR.puts "(-g|--get) cannot be used togehter with (-q|--quit)"
-		exit 1
-	end
-
-	def find(dir= ".")
+	def SendhttpArgs.find(dir= ".")
 		Dir.new(dir).collect do |f|
 			next if f=~ /^\./
 			next if FileTest.symlink?(f)
@@ -90,99 +101,102 @@ begin
 		end.delete_if { |x| !x }.flatten
 	end
 
-	$file= Hash.new
-	name= false
-	last= nil
-	(arghandler.parse(ARGV)+[nil]).each do |file|
-		case
-		when name
-			name= false
-			$file[file]= last
-			last= nil
-		when file=="@"
-			name= true
-		else
-			$file[last]= last if last
-			last= file
-		end
-	end
-	$file.each_key do |k|
-		if !( k and $file[k] and !FileTest.symlink?($file[k]))
-			$file.delete(k)
-		elsif FileTest.directory?($file[k])
-			find($file[k]).each do |f|
-				if k == "."
-					$file[f]= $file[k]+"/"+f
-				else
-					$file[k+"/"+f]= $file[k]+"/"+f
+	def files_expand
+		@files.each_key do |k|
+			if FileTest.symlink?(@files[k])
+				@files.delete(k)
+			elsif FileTest.directory?(@files[k])
+				find(@files[k]).each do |f|
+					if k == "."
+						@files[f]= @files[k]+"/"+f
+					else
+						@files[k+"/"+f]= @files[k]+"/"+f
+					end
+				end
+				@files.delete(k)
+			else
+				unless @files[k]=="-" or self[:get] or File.exists?(@files[k]) # we can write to a non existing file with (-g|--get)
+					raise "File '#{@files[k]}' does not exist"
 				end
 			end
-			$file.delete(k)
-		else
-			unless $file[k]=="-" or $get or File.exists?($file[k]) # we can write to a non existing file with (-g|--get)
-				STDERR.puts "File '#{$file[k]}' does not exist"
-				exit 1
-			end
 		end
 	end
+	private :files_expand
 
-	unless $file.size > 0
+	def parse(array)
+		array= super(array) # parse the switches (-s|--something)
+		while i= array.index("@")
+			raise "wrong '@' argument" unless (1..array.size-1).include?(i)
+			raise "wrong '@' argument" if array[i-1] == "@" or array[i+1] == "@"
+			@files[array[i+1]]= array[i-1]
+			array.delete_at(i+1)
+			array.delete_at(i)
+			array.delete_at(i-1)
+		end
+		array.each do |file|
+			@files[file]= file
+		end
+		files_expand
+	end
+
+end
+
+
+begin
+
+	options= SendhttpArgs.new
+	options.parse(ARGV)
+
+	unless options.files.size > 0
 		STDERR.puts "No filename given"
 		exit 1
 	end
 
-	if $get and $file.size > 1
-		STDERR.puts "you can supply only one filename with (-g|--get)"
-		exit 1
-	end
-
-	if $get and $file.keys[0]!=$file.values[0]
-		STDERR.puts "there is no point in renaming a file, filenames are never anounced with (-g|--get)"
-		exit 1
-	end
-
-	$file_count= Hash.new($count)
-	$file_count["-"]= 1
+	file_count= Hash.new(options[:count])
+	file_count["-"]= 1
 
 	server= HTTPServer.new
-	server.listen($port) do |filename, vars|
+	server.listen(options[:port]) do |filename, vars|
 		case
-		when file= $file[filename]
-			if $get
+		when file= options.files[filename]
+			if options[:get]
 				unless vars["form-data"] and vars["form-data"]["upload"]
 					HTML.base(HTML.h1("Please upload something")+HTML.div(HTML.form(" action=\"\" method=\"post\" enctype=\"multipart/form-data\"", HTML.input("hidden", " name=\"upload\"")+HTML.input("file", " name=\"file\"")+HTML.input("submit", " value=\"send\""))))
 				else
-					$quit-= 1
-					server.close if $quit==0
-					$file_count[filename]-= 1
-					$file.delete(filename) if $file_count[filename] == 0
-					server.close if $file.keys.size == 0
+					options[:quit]-= 1
+					server.close if options[:quit]==0
+					file_count[filename]-= 1
+					options.files.delete(filename) if file_count[filename] == 0
+					server.close if options.files.keys.size == 0
 					if file == "-"
 						STDOUT.write(vars["form-data"]["file"])
 					else
 						File.open(file, "w").write(vars["form-data"]["file"])
 					end
-					HTML.base(HTML.h1("Upload Complete")+HTML.div(HTML.list($file.keys.sort.collect { |k| HTML.a(k, "/#{k}") } )))
+					HTML.base(HTML.h1("Upload Complete")+HTML.div(HTML.list(options.files.keys.sort.collect { |k| HTML.a(k, "/#{k}") } )))
 				end
 			else
-				$quit-= 1
-				server.close if $quit==0
-				$file_count[filename]-= 1
-				$file.delete(filename) if $file_count[filename] == 0
-				server.close if $file.keys.size == 0
+				options[:quit]-= 1
+				server.close if options[:quit]==0
+				file_count[filename]-= 1
+				options.files.delete(filename) if file_count[filename] == 0
+				server.close if options.files.keys.size == 0
 				if file == "-"
 					STDIN
 				else
 					HTTPServer.put_file(file)
 				end
 			end
-		when $listing
-				[HTML.base(HTML.h1("The following files are available")+HTML.div(HTML.list($file.keys.sort.collect { |k| HTML.a(k, "/#{k}") } ))), nil, "404 NOT FOUND"]
+		when options[:listing]
+				[HTML.base(HTML.h1("The following files are available")+HTML.div(HTML.list(options.files.keys.sort.collect { |k| HTML.a(k, "/#{k}") } ))), nil, "404 NOT FOUND"]
 		else
 			false
 		end
 	end
 
+rescue RuntimeError => e
+	STDERR.puts e.message
+	exit 1
 rescue OptionParser::MissingArgument => e
 	STDERR.puts "Missing argument for '#{e.args}'"
 	exit 1
