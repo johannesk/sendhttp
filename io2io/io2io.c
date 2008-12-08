@@ -76,12 +76,15 @@ VALUE t_sendfile(VALUE self, VALUE in, VALUE out, VALUE size)
 	fcntl(d, F_SETFL, 0);
 
 	size_t last;
+	size_t send= 0;
 	if (size == -1) { // send everything
-		while (do_sendfile(d, s, SENDFILE_MAX) == SENDFILE_MAX);
+		while ((last= do_sendfile(d, s, SENDFILE_MAX)) < 0)
+			send+= last;
 	} else { // send only the bytes requested
 		while (si > 0) {
 			last= do_sendfile(d, s, min(si, SENDFILE_MAX));
-			if (last != SENDFILE_MAX) // the end of the file
+			send+= last;
+			if (last == 0) // the end of the file
 				break;
 		}
 	}
@@ -89,7 +92,7 @@ VALUE t_sendfile(VALUE self, VALUE in, VALUE out, VALUE size)
 	fcntl(s, F_SETFL, flags_s);
 	fcntl(d, F_SETFL, flags_d);
 
-	return Qnil;
+	return INT2NUM(send);
 }
 
 VALUE M_io2io;
