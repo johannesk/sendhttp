@@ -22,6 +22,8 @@
 #include <fcntl.h>
 #include <sys/sendfile.h>
 
+#define SENDFILE_MAX 16777216 // 16MB
+
 VALUE t_forever(VALUE self, VALUE in, VALUE out)
 {
 	int s, d;
@@ -49,16 +51,23 @@ VALUE t_forever(VALUE self, VALUE in, VALUE out)
 	return Qnil;
 }
 
+size_t do_sendfile(int dest, int source, size_t size)
+{
+	int last;
+	if ((last= sendfile(dest, source, NULL, size)) == -1)
+		rb_sys_fail("sendfile");
+	return last;
+}
+
+#define min(a, b) (a < b ? a : b)
+
 VALUE t_sendfile(VALUE self, VALUE in, VALUE out, VALUE size)
 {
 	int s, d;
-	size_t si;
+	int si;
 	s= NUM2INT(in);
 	d= NUM2INT(out);
-	if (NUM2INT(size) == -1)
-		si= 0xffffffffffffffffffffffffffffffffffffff;
-	else
-		si= NUM2INT(size);
+	si= NUM2INT(size);
 
 	//deactivate O_NONBLOCK
 	int flags_s= fcntl(s, F_GETFL);
@@ -66,8 +75,16 @@ VALUE t_sendfile(VALUE self, VALUE in, VALUE out, VALUE size)
 	fcntl(s, F_SETFL, 0);
 	fcntl(d, F_SETFL, 0);
 
-	if (sendfile(d, s, NULL, si) == -1)
-		rb_sys_fail("sendfile");
+	size_t last;
+	if (size == -1) { // send everything
+		while (do_sendfile(d, s, SENDFILE_MAX) == SENDFILE_MAX);
+	} else { // send only the bytes requested
+		while (si > 0) {
+			last= do_sendfile(d, s, min(si, SENDFILE_MAX));
+			if (last != SENDFILE_MAX) // the end of the file
+				break;
+		}
+	}
 
 	fcntl(s, F_SETFL, flags_s);
 	fcntl(d, F_SETFL, flags_d);
