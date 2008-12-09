@@ -1,5 +1,7 @@
 /*
- * © Johannes Krude 2008
+ * Author:: Johannes Krude
+ * Copyright:: (c) Johannes Krude 2008
+ * License:: AGPL3
  *
  * This file is part of sendfile-utils.
  *
@@ -23,6 +25,9 @@
 
 magic_t cookie;
 
+/*
+ * Return the mimetype of the file given with filename.
+ */
 VALUE t_file(VALUE self, VALUE input)
 {
 	//SaveStringValue(input);
@@ -42,6 +47,9 @@ VALUE t_file(VALUE self, VALUE input)
 
 VALUE M_magicmime;
 
+/*
+ * Determine the mime type with the file util.
+ */
 void Init_magicmime()
 {
 	cookie= magic_open(MAGIC_SYMLINK | MAGIC_MIME_TYPE);

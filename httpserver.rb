@@ -1,6 +1,9 @@
-#--
-# © Johannes Krude 2008
 #
+# Author:: Johannes Krude
+# Copyright:: (c) Johannes Krude 2008
+# License:: AGPL3
+#
+#--
 # This file is part of sendfile-utils.
 #
 # broadcast-files is free software: you can redistribute it and/or modify

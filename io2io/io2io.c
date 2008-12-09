@@ -1,5 +1,7 @@
 /*
- * © Johannes Krude 2008
+ * Author:: Johannes Krude
+ * Copyright:: (c) Johannes Krude 2008
+ * License:: AGPL3
  *
  * This file is part of sendfile-utils.
  *
@@ -24,6 +26,10 @@
 
 #define SENDFILE_MAX 16777216 // 16MB
 
+/*
+ * Read data from in and write it to out, until the end of
+ * in is reached. in and out must be given as Integer.
+ */
 VALUE t_forever(VALUE self, VALUE in, VALUE out)
 {
 	int s, d;
@@ -61,6 +67,13 @@ size_t do_sendfile(int dest, int source, size_t size)
 
 #define min(a, b) (a < b ? a : b)
 
+/*
+ * Use the sendfile systemcall to move size bytes data from
+ * source to dest. This works only if source is a regular
+ * file and dest is a socket. If size is -1 data will be
+ * moved until the end of source is reached. Source and dest
+ * must be given as Integer.
+ */
 VALUE t_sendfile(VALUE self, VALUE in, VALUE out, VALUE size)
 {
 	int s, d;
@@ -97,6 +110,9 @@ VALUE t_sendfile(VALUE self, VALUE in, VALUE out, VALUE size)
 
 VALUE M_io2io;
 
+/*
+ * Some functions to put data to the network with high performance.
+ */
 void Init_io2io()
 {
 	M_io2io= rb_define_module("IO2IO");
