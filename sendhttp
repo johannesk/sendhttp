@@ -92,12 +92,11 @@ class SendhttpArgs < OptionParser
 		@options[key.to_sym]= value
 	end
 
-	def SendhttpArgs.find(dir= ".")
-		Dir.new(dir).collect do |f|
-			next if f=~ /^\./
-			next if FileTest.symlink?(f)
-			if FileTest.directory?(f)
-				find(f).collect { |g| f+"/"+g }
+	def SendhttpArgs.find(path)
+		path.children.collect do |f|
+			next if f.symlink?
+			if f.directory?
+				find(f)
 			else
 				f
 			end
@@ -106,20 +105,17 @@ class SendhttpArgs < OptionParser
 
 	def files_expand
 		@files.each_key do |k|
-			if FileTest.symlink?(@files[k])
-				@files.delete(k)
-			elsif FileTest.directory?(@files[k])
-				find(@files[k]).each do |f|
-					if k == "."
-						@files[f]= @files[k]+"/"+f
-					else
-						@files[k+"/"+f]= @files[k]+"/"+f
-					end
+			path= @files[k]
+			if path.symlink?
+				@files.delete(k.basename)
+			elsif path.directory?
+				SendhttpArgs.find(path).each do |p|
+					@files[(Pathname.new(k)+p.relative_path_from(path)).to_s]= p
 				end
 				@files.delete(k)
 			else
-				unless @files[k]=="-" or self[:get] or File.exists?(@files[k]) # we can write to a non existing file with (-g|--get)
-					raise "File '#{@files[k]}' does not exist"
+				unless path.to_s=="-" or self[:get] or path.file? # we can write to a non existing file with (-g|--get)
+					raise "File '#{path}' does not exist"
 				end
 			end
 		end
@@ -131,13 +127,14 @@ class SendhttpArgs < OptionParser
 		while i= array.index("@")
 			raise "wrong '@' argument" unless (1..array.size-1).include?(i)
 			raise "wrong '@' argument" if array[i-1] == "@" or array[i+1] == "@"
-			@files[array[i+1]]= array[i-1]
+			@files[array[i+1]]= Pathname.new(array[i-1])
 			array.delete_at(i+1)
 			array.delete_at(i)
 			array.delete_at(i-1)
 		end
 		array.each do |file|
-			@files[file]= file
+			p= Pathname.new(file)
+			@files[p.basename.to_s]= p
 		end
 		files_expand
 	end
@@ -171,7 +168,7 @@ begin
 					file_count[filename]-= 1
 					options.files.delete(filename) if file_count[filename] == 0
 					server.close if options.files.keys.size == 0
-					if file == "-"
+					if file.to_s == "-"
 						STDOUT.write(vars["form-data"]["file"])
 					else
 						File.open(file, "w").write(vars["form-data"]["file"])
@@ -184,10 +181,10 @@ begin
 				file_count[filename]-= 1
 				options.files.delete(filename) if file_count[filename] == 0
 				server.close if options.files.keys.size == 0
-				if file == "-"
+				if file.to_s == "-"
 					STDIN
 				else
-					HTTPServer.put_file(file)
+					HTTPServer.put_file(file.to_s)
 				end
 			end
 		when options[:listing]
