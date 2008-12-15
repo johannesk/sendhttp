@@ -158,6 +158,10 @@ begin
 	server= HTTPServer.new
 	server.listen(options[:port]) do |filename, vars|
 		case
+		when filename=="?source"
+			HTTPServer.put_file("/usr/share/sendhttp/sendhttp.tar.gz")
+		when filename=="?license"
+			HTTPServer.put_file("/usr/share/sendhttp/license.txt")
 		when file= options.files[filename]
 			if options[:get]
 				unless vars["form-data"] and vars["form-data"]["upload"]

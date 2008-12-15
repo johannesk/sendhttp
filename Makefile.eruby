@@ -26,23 +26,31 @@ exec_prefix = <%= Config::MAKEFILE_CONFIG["exec_prefix"] %>
 sitedir = <%= Config::MAKEFILE_CONFIG["sitedir"]%>
 sitelibdir = <%= Config::MAKEFILE_CONFIG["sitelibdir"] %>
 bindir = <%= Config::MAKEFILE_CONFIG["bindir"] %>
+sharedir = /usr/share/sendhttp
 
 MKDIR = <%= Config::MAKEFILE_CONFIG["MAKEDIRS"] %>
 INSTALL = <%= Config::MAKEFILE_CONFIG["INSTALL"] %>
 INSTALL_DATA = $(INSTALL) -m 644
 INSTALL_BIN = $(INSTALL) -m 755
 
-all: make-io2io make-magicmime
+all: make-io2io make-magicmime tarball
+
+tarball:
+	rake sendhttp.tar.gz
 
 install: all install-io2io install-magicmime
 	$(MKDIR) $(bindir)
 	$(MKDIR) $(sitelibdir)
 	$(MKDIR) $(sitelibdir)/sendhttp-lib
+	$(MKDIR) $(sharedir)
 	$(INSTALL_BIN) sendhttp $(bindir)
 	$(INSTALL_DATA) httpserver.rb $(sitelibdir)/sendhttp-lib
 	$(INSTALL_DATA) html.rb $(sitelibdir)/sendhttp-lib
+	$(INSTALL_DATA) sendhttp.tar.gz $(sharedir)
+	$(INSTALL_DATA) license.txt $(sharedir)
 
 clean: clean-io2io clean-magicmime
+	rm sendhttp.tar.gz
 
 make-io2io:
 	make -C io2io
