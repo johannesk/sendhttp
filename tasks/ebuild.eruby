@@ -1,7 +1,5 @@
 <%
-require './git'
-$git= Git.new
-$rev= $git.rev
+$rev= File.open(".git/refs/heads/master").read.strip
 %>
 # Copyright 1999-2008 Gentoo Foundation
 # Distributed under the terms of the GNU General Public License v2
