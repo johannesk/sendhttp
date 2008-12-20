@@ -29,6 +29,12 @@ require 'pathname'
 require 'sendhttp-lib/httpserver'
 require 'sendhttp-lib/html'
 
+$file_source= "/usr/share/sendhttp/sendhttp.tar.gz"
+$file_license= "/usr/share/sendhttp/license.txt"
+
+$file_source= "./sendhttp.tar.gz" #RWI
+$file_license= "./license.txt" #RWI
+
 $verbose= 1
 
 class SendhttpArgs < OptionParser
@@ -159,9 +165,9 @@ begin
 	server.listen(options[:port]) do |filename, vars|
 		case
 		when filename=="?source"
-			HTTPServer.put_file("/usr/share/sendhttp/sendhttp.tar.gz")
+			HTTPServer.put_file($file_source)
 		when filename=="?license"
-			HTTPServer.put_file("/usr/share/sendhttp/license.txt")
+			HTTPServer.put_file($file_license)
 		when file= options.files[filename]
 			if options[:get]
 				unless vars["form-data"] and vars["form-data"]["upload"]

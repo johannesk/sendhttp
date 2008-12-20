@@ -32,6 +32,7 @@ MKDIR = <%= Config::MAKEFILE_CONFIG["MAKEDIRS"] %>
 INSTALL = <%= Config::MAKEFILE_CONFIG["INSTALL"] %>
 INSTALL_DATA = $(INSTALL) -m 644
 INSTALL_BIN = $(INSTALL) -m 755
+RWI = sed -i "/\#RWI/d"
 
 all: make-io2io make-magicmime tarball
 
@@ -44,6 +45,7 @@ install: all install-io2io install-magicmime
 	$(MKDIR) $(sitelibdir)/sendhttp-lib
 	$(MKDIR) $(sharedir)
 	$(INSTALL_BIN) sendhttp $(bindir)
+	$(RWI) $(bindir)/sendhttp
 	$(INSTALL_DATA) httpserver.rb $(sitelibdir)/sendhttp-lib
 	$(INSTALL_DATA) html.rb $(sitelibdir)/sendhttp-lib
 	$(INSTALL_DATA) sendhttp.tar.gz $(sharedir)
