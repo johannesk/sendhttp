@@ -1,6 +1,3 @@
-<%
-$rev= File.open(".git/refs/heads/master").read.strip
-%>
 # Copyright 1999-2008 Gentoo Foundation
 # Distributed under the terms of the GNU General Public License v2
 # $Header: $
@@ -44,7 +41,7 @@ HOMEPAGE="http://foo.bar.com/"
 
 # Point to any required sources; these will be automatically downloaded by
 # Portage.
-SRC_URI="sendhttp-<%= $rev %>.tar.gz"
+SRC_URI="sendhttp-<%= $time.to_i %>.tar.gz"
 LICENSE="AGPL-3"
 SLOT="0"
 KEYWORDS="~amd64"
