@@ -188,7 +188,7 @@ begin
 				end
 			end
 		when options[:listing]
-				[HTML.base(HTML.h1("The following files are available")+HTML.div(HTML.list(options.files.keys.sort.collect { |k| HTML.a(k, "/#{k}") } ))), nil, "404 NOT FOUND"]
+				[HTML.base(HTML.h1("The following files are available")+HTML.div(HTML.list(options.files.keys.sort.collect { |k| HTML.a(k, "/#{k}") } ))), "404 NOT FOUND"].flatten
 		else
 			false
 		end
