@@ -110,7 +110,7 @@ class SendhttpArgs < OptionParser
 	end
 
 	def files_expand
-		@files.each_key do |k|
+		@files.keys.clone.each do |k| # clone is needed, we can't modify the hash we are iterating over
 			path= @files[k]
 			if path.symlink?
 				@files.delete(k.basename)
