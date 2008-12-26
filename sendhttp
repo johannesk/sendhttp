@@ -61,7 +61,7 @@ class SendhttpArgs < OptionParser
 	def initialize
 		super
 		@options= Hash.new
-	@files= Hash.new
+		@files= Hash.new
 		self.banner= "Usage: sendhttp [options] <file [@ name]>*"
 
 		@options[:count]= 1.0/0
