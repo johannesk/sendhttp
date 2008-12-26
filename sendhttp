@@ -21,9 +21,21 @@
 # along with sendhttp.  If not, see <http://www.gnu.org/licenses/>.
 #++
 
+# ensure local libraries are used when sendhttp is not installed #RWI
+def require(file)                                                #RWI
+	if File.exists?("./#{file}.rb")                          #RWI
+		begin                                            #RWI
+			super("./#{file}")                       #RWI
+		rescue LoadError                                 #WRI
+			super(file)                              #RWI
+		end                                              #RWI
+	else                                                     #RWI
+		super(file)                                      #RWI
+	end                                                      #RWI
+end                                                              #RWI
+                                                                 #RWI
 $version= "pre 0.1α"
 
-$: << "./lib"
 require 'optparse'
 require 'pathname'
 require 'sendhttp-lib/httpserver'
@@ -31,9 +43,9 @@ require 'sendhttp-lib/html'
 
 $file_source= "/usr/share/sendhttp/sendhttp.tar.gz"
 $file_license= "/usr/share/sendhttp/license.txt"
-
-$file_source= "./sendhttp.tar.gz" #RWI
-$file_license= "./license.txt" #RWI
+                                                                 #RWI
+$file_source= "./sendhttp.tar.gz"                                #RWI
+$file_license= "./license.txt"                                   #RWI
 
 $verbose= 1
 
