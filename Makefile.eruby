@@ -36,7 +36,7 @@ RWI = sed -i "/\#RWI/d"
 
 all: make-io2io make-magicmime tarball
 
-tarball:
+tarball: make-io2io make-magicmime
 	rake sendhttp.tar.gz
 
 install: all install-io2io install-magicmime
