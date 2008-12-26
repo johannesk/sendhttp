@@ -21,6 +21,9 @@
 # along with sendhttp.  If not, see <http://www.gnu.org/licenses/>.
 #++
 
+$VERBOSE= true                                                   #RWI
+$DEBUG= true                                                     #RWI
+                                                                 #RWI
 # do make first, so we can deliver the right tarball, to comply  #RWI
 # to the AGPL                                                    #RWI
 raise "make failed" unless `make > /dev/null; echo $?` == "0\n"  #RWI
@@ -49,8 +52,6 @@ $file_license= "/usr/share/sendhttp/license.txt"
                                                                  #RWI
 $file_source= "./sendhttp.tar.gz"                                #RWI
 $file_license= "./license.txt"                                   #RWI
-
-$verbose= 1
 
 class SendhttpArgs < OptionParser
 
