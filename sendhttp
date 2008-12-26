@@ -32,7 +32,7 @@ def require(file)                                                #RWI
 	if File.exists?("./#{file}.rb")                          #RWI
 		begin                                            #RWI
 			super("./#{file}")                       #RWI
-		rescue LoadError                                 #WRI
+		rescue LoadError                                 #RWI
 			super(file)                              #RWI
 		end                                              #RWI
 	else                                                     #RWI
