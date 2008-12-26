@@ -22,6 +22,7 @@
 
 require 'sendhttp-lib/io2io'
 require 'sendhttp-lib/magicmime'
+require 'socket'
 
 # A small but not complete http server.
 #
