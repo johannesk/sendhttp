@@ -21,6 +21,9 @@
 # along with sendhttp.  If not, see <http://www.gnu.org/licenses/>.
 #++
 
+# do make first, so we can deliver the right tarball, to comply  #RWI
+# to the AGPL                                                    #RWI
+raise "make failed" unless `make > /dev/null; echo $?` == "0\n"  #RWI
 # ensure local libraries are used when sendhttp is not installed #RWI
 def require(file)                                                #RWI
 	if File.exists?("./#{file}.rb")                          #RWI
