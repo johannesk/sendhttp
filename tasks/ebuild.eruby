@@ -34,10 +34,10 @@ inherit eutils
 # take a look at /usr/portage/eclasses/ for more examples.
 
 # Short one-line description of this package.
-DESCRIPTION="A fast solution for sending files to othe hosts"
+DESCRIPTION="A solution for sending files to othe hosts on the fly"
 
 # Homepage, not used by Portage directly but handy for developer reference
-HOMEPAGE="http://foo.bar.com/"
+HOMEPAGE="http://johannes.krude.de/projects/sendhttp"
 
 # Point to any required sources; these will be automatically downloaded by
 # Portage.
