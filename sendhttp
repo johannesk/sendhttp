@@ -29,9 +29,10 @@ $DEBUG= true                                                     #RWI
 raise "make failed" unless `make > /dev/null; echo $?` == "0\n"  #RWI
 # ensure local libraries are used when sendhttp is not installed #RWI
 def require(file)                                                #RWI
-	if File.exists?("./#{file}.rb")                          #RWI
+	if file=~ /^sendhttp-lib\/(.*)?/ and                     #RWI
+	File.exists?("./#{$1}.rb")                               #RWI
 		begin                                            #RWI
-			super("./#{file}")                       #RWI
+			super("./#{$1}")                         #RWI
 		rescue LoadError                                 #RWI
 			super(file)                              #RWI
 		end                                              #RWI

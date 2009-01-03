@@ -13,7 +13,6 @@ files= [
 	"magicmime/configure",
 	"magicmime/magicmime.c",
 	"sendhttp",
-	"sendhttp-lib",
 	"tasks"
 ]
 
