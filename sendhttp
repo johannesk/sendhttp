@@ -178,6 +178,14 @@ begin
 	file_count= Hash.new(options[:count])
 	file_count["-"]= 1
 
+	if options[:timeout] < (1.0/0)
+		Thread.new do
+			sleep(options[:timeout])
+			STDERR.puts "Timeout"
+			exit(3)
+		end
+	end
+
 	server= HTTPServer.new
 	server.listen(options[:port]) do |filename, vars|
 		case
